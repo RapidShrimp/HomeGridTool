@@ -18,20 +18,28 @@ class UTextureRenderTarget2D;
  *If attached to anything else, it will be removed
  *Update needs to be called manually
  */
-UCLASS()
+UCLASS(meta=(BlueprintSpawnableComponent))
 class LEVELSTREAMING_API UPortalManager : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
 	UPortalManager();
+	
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
 
+
+	UFUNCTION(BlueprintCallable)
+	void Init(AEuclidCharacter* PlayerCharacter);
+
+	void SetPlayerCharacter(AEuclidCharacter* PlayerCharacter);
+	void SetControllerOwner(APlayerController* NewOwner);
+	
 	UFUNCTION(BlueprintCallable,Category = "Portal")
 	void TeleportRequest(APortal* Portal, AActor* TeleportActor);
 
-	void SetControllerOwner(APlayerController* NewOwner);
 
-	void Init();
 
 	UFUNCTION(BlueprintCallable)
 	void Update (float DeltaTime);
@@ -63,7 +71,6 @@ private:
 	
 	
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+
 
 };

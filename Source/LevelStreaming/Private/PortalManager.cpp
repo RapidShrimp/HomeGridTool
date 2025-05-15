@@ -8,6 +8,7 @@
 #include "Components/SceneCaptureComponent2D.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "LevelStreaming/Public/EuclidCharacter.h"
+#include "LevelStreaming/Public/EuclidFunctionLibrary.h"
 #include "LevelStreaming/Public/Portal.h"
 
 
@@ -15,36 +16,36 @@
 UPortalManager::UPortalManager()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+	UpdateDelay = 1.1f;
+	PreviousScreenSizeX = 0;
+	PreviousScreenSizeY = 0;
+	PortalTexture = nullptr;
+}
 
+
+// Called when the game starts or when spawned
+void UPortalManager::BeginPlay()
+{
+	Super::BeginPlay();
+
+}
+
+void UPortalManager::Init(AEuclidCharacter* PlayerCharacter)
+{
+
+	if(!GetOwner())
+	{
+		UE_LOG(LogTemp,Error,TEXT("Portal Manager Has No Owner"))
+		return;
+	}
 	if(!GetOwner()->IsA(AController::StaticClass()))
 	{
 		UE_LOG(LogTemp,Error,TEXT("Cannot Attach Portal Manager To a Non Controller classtype"))
 		return;
 	}
-
-	UpdateDelay = 1.1f;
-	PreviousScreenSizeX = 0;
-	PreviousScreenSizeY = 0;
-	PortalTexture = nullptr;
-
 	SetControllerOwner(Cast<APlayerController>(GetOwner()));
-	Init();
-}
-
-void UPortalManager::TeleportRequest(APortal* Portal, AActor* TeleportActor)
-{
-}
-
-void UPortalManager::SetControllerOwner(APlayerController* NewOwner)
-{
-	ControllerOwner = NewOwner;
-	CharacterOwner = Cast<AEuclidCharacter>(ControllerOwner->GetPawn());
+	SetPlayerCharacter(PlayerCharacter);
 	
-}
-
-void UPortalManager::Init()
-{
-
 	SceneCapture = NewObject<USceneCaptureComponent2D>(this,USceneCaptureComponent2D::StaticClass(),TEXT("PortalSceneCapture"));
 	SceneCapture->AttachToComponent(GetOwner()->GetRootComponent(),FAttachmentTransformRules::SnapToTargetIncludingScale);
 	SceneCapture->RegisterComponent();
@@ -76,6 +77,39 @@ void UPortalManager::Init()
 	SceneCapture->PostProcessSettings = CaptureSettings;
 
 	GeneratePortalTexture();
+
+	UE_LOG(LogTemp,Display,TEXT("Successfully Init Portal Manager"));
+
+}
+
+void UPortalManager::SetPlayerCharacter(AEuclidCharacter* PlayerCharacter)
+{
+	CharacterOwner = PlayerCharacter;
+	CharacterOwner->SetPortalManger(this);
+}
+
+void UPortalManager::SetControllerOwner(APlayerController* NewOwner)
+{
+	ControllerOwner = NewOwner;
+}
+
+void UPortalManager::TeleportRequest(APortal* Portal, AActor* TeleportActor)
+{
+	if(!Portal || !TeleportActor)
+	{
+		UE_LOG(LogTemp,Error,TEXT("Teleport Request Failed Portal OR Teleport Actor Nullptr"));
+		return;
+	}
+
+	Portal->TeleportActor(TeleportActor);
+
+	APortal* FuturePortal = UpdatePortals();
+
+	if(FuturePortal)
+	{
+		FuturePortal->ForceTick();
+		UpdateCapture(FuturePortal);
+	}
 }
 
 void UPortalManager::Update(float DeltaTime)
@@ -100,6 +134,7 @@ APortal* UPortalManager::UpdatePortals()
 {
 	if(ControllerOwner == nullptr)
 	{
+		UE_LOG(LogTemp,Error,TEXT("Cannot update portal, controller nullptr"));
 		return nullptr;
 	}
 
@@ -133,17 +168,29 @@ APortal* UPortalManager::UpdatePortals()
 void UPortalManager::UpdateCapture(APortal* Portal)
 {
 
-	if(ControllerOwner == nullptr) {return;}
+	if(ControllerOwner == nullptr)
+	{
+		UE_LOG(LogTemp,Error,TEXT("Cannot Update Capture, No Controller"));
+		return;
+	}
 
-	if(!SceneCapture || !PortalTexture || !Portal) {return;}
+	if(!SceneCapture || !PortalTexture || !Portal)
+	{
+		UE_LOG(LogTemp,Error,TEXT("Cannot Update Capture nullptr found"));
+		return;
+	}
 
 	UCameraComponent* PlayerCamera = CharacterOwner->FindComponentByClass<UCameraComponent>();
 	AActor* Target = Portal->GetTarget();
 
-	if(Target == nullptr) {return;}
+	if(Target == nullptr)
+	{
+		UE_LOG(LogTemp,Error,TEXT("Target is nullptr"));
+		return;
+	}
 
 
-	FVector NewLoc = APortal::ConvertLocationWorldToActorLocal(PlayerCamera->GetComponentLocation(),Portal,Target);
+	FVector NewLoc = UEuclidFunctionLibrary::ConvertLocationWorldToActorLocal(PlayerCamera->GetComponentLocation(),Portal,Target);
 	SceneCapture->SetWorldLocation(NewLoc);
 
 	FTransform CameraTransform = PlayerCamera->GetComponentTransform();
@@ -161,11 +208,12 @@ void UPortalManager::UpdateCapture(APortal* Portal)
 	Portal->SetActive(true);
 	Portal->SetRenderTargetTexture(PortalTexture);
 	SceneCapture->TextureTarget = PortalTexture;
-
-
-	SceneCapture->CustomProjectionMatrix;
+	
+	SceneCapture->CustomProjectionMatrix = UEuclidFunctionLibrary::GetCameraProjectionMatrix(ControllerOwner);
 
 	SceneCapture->CaptureScene();
+
+	UE_LOG(LogTemp,Display,TEXT("Capture Updated"));
 }
 
 void UPortalManager::GeneratePortalTexture()
@@ -187,6 +235,7 @@ void UPortalManager::GeneratePortalTexture()
 		return;
 	}
 
+	UE_LOG(LogTemp,Warning,TEXT("Size Changed"));
 	if(PortalTexture == nullptr)
 	{
 		PortalTexture = NewObject<UTextureRenderTarget2D>(this,UTextureRenderTarget2D::StaticClass(),TEXT("Portal Render Target"));
@@ -213,10 +262,5 @@ void UPortalManager::GeneratePortalTexture()
 	}
 }
 
-// Called when the game starts or when spawned
-void UPortalManager::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
+
 

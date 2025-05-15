@@ -5,6 +5,7 @@
 
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "LevelStreaming/Public/EuclidFunctionLibrary.h"
 
 
 // Sets default values
@@ -26,20 +27,6 @@ APortal::APortal()
 
 	Target = nullptr;
 }
-
-// Called when the game starts or when spawned
-void APortal::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
-
-// Called every frame
-void APortal::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
-
 
 void APortal::ForceTick_Implementation() {}
 void APortal::SetRenderTargetTexture_Implementation(UTexture* RenderTexture) {}
@@ -80,17 +67,22 @@ bool APortal::IsCrossingPortal(FVector Location, FVector PortalLoc, FVector Port
 
 void APortal::TeleportActor(AActor* TeleportActor)
 {
+
 	//Exit Early Null Checks
-	if(!TeleportActor || !Target) { return;	}
+	if(!TeleportActor || !Target)
+	{
+		UE_LOG(LogTemp,Error,TEXT("No Target or Teleport Actor"));
+		return;
+	}
 
 	//Location Change
 	FHitResult Hit;
-	const FVector NewLocation = ConvertLocationWorldToActorLocal(TeleportActor->GetActorLocation(),this,Target);
+	const FVector NewLocation = UEuclidFunctionLibrary::ConvertLocationWorldToActorLocal(TeleportActor->GetActorLocation(),this,Target);
 	TeleportActor->SetActorLocation(NewLocation,false,&Hit,ETeleportType::TeleportPhysics);
 	
 
 	//Rotation Change
-	FRotator ExitRotation = ConvertRotationWorldToActorLocal(TeleportActor->GetActorRotation(),this,Target);
+	FRotator ExitRotation = UEuclidFunctionLibrary::ConvertRotationWorldToActorLocal(TeleportActor->GetActorRotation(),this,Target);
 	TeleportActor->SetActorRotation(ExitRotation);
 	
 
@@ -108,6 +100,7 @@ void APortal::TeleportActor(AActor* TeleportActor)
 	
 	TeleportActor->GetRootComponent()->ComponentVelocity = ExitVelocity;
 	
+	UE_LOG(LogTemp,Display,TEXT("Try Teleport Actor"));
 
 	//Exit Rotation
 	if( TeleportActor->IsA(ACharacter::StaticClass()))
@@ -120,7 +113,7 @@ void APortal::TeleportActor(AActor* TeleportActor)
 			AController* PlayerController = PlayerCharacter->GetController();  
 			if(PlayerCharacter != nullptr)
 			{
-				ExitRotation = ConvertRotationWorldToActorLocal(PlayerController->GetControlRotation(),this,Target);
+				ExitRotation = UEuclidFunctionLibrary::ConvertRotationWorldToActorLocal(PlayerController->GetControlRotation(),this,Target);
 				PlayerController->SetControlRotation(ExitRotation);
 			}
 			PlayerCharacter->GetCharacterMovement()->Velocity = ExitVelocity;
@@ -128,42 +121,5 @@ void APortal::TeleportActor(AActor* TeleportActor)
 	}
 	LastLocation = NewLocation;
 }
-
-FVector APortal::ConvertLocationWorldToActorLocal(const FVector& Location, const AActor* ToLocalActor, const AActor* FromTarget)
-{
-	if(!ToLocalActor || !FromTarget) {return FVector::ZeroVector;}
-
-	const FVector Direction = Location - ToLocalActor->GetActorLocation();
-	const FVector TargetLocation = FromTarget->GetActorLocation();
-
-	FVector Dots;
-	Dots.X  = FVector::DotProduct( Direction, ToLocalActor->GetActorForwardVector() );
-	Dots.Y  = FVector::DotProduct( Direction, ToLocalActor->GetActorRightVector() );
-	Dots.Z  = FVector::DotProduct( Direction, ToLocalActor->GetActorUpVector() );
-
-	const FVector NewDirection =
-		Dots.X * FromTarget->GetActorForwardVector()+
-		Dots.Y * FromTarget->GetActorRightVector()+
-		Dots.Z * FromTarget->GetActorUpVector();
-
-	return TargetLocation + NewDirection;
-}
-
-FRotator APortal::ConvertRotationWorldToActorLocal(const FRotator& Rotation, const AActor* ToLocalActor, const AActor* FromTarget)
-{
-	if( ToLocalActor == nullptr || FromTarget == nullptr )
-	{
-		return FRotator::ZeroRotator;
-	}
-
-	const FTransform SourceTransform = ToLocalActor->GetActorTransform();
-	const FTransform TargetTransform = FromTarget->GetActorTransform();
-
-	const FQuat LocalQuaternion = SourceTransform.GetRotation().Inverse() * FQuat( Rotation );
-	const FQuat NewQuaternion = TargetTransform.GetRotation() * LocalQuaternion;
-
-	return NewQuaternion.Rotator();
-}
-
 
 

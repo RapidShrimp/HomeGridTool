@@ -39,8 +39,6 @@ public:
 	// Sets default values for this actor's properties
 	APortal();
 	
-	virtual void BeginPlay() override;
-
 #pragma region Getters/Setters
 	//If the portal is on and Seen by player
 	UFUNCTION(BlueprintPure,Category = "Portal")
@@ -57,7 +55,6 @@ public:
 	
 #pragma endregion
 	
-	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(BlueprintNativeEvent,Category = "Portal")
 	void ForceTick();
@@ -77,8 +74,5 @@ public:
 
 	UFUNCTION(BlueprintCallable,Category = "Portal")
 	void TeleportActor(AActor* TeleportActor);
-
-	static FVector ConvertLocationWorldToActorLocal(const FVector& Location, const AActor* ToLocalActor, const AActor* FromTarget);
-	static FRotator ConvertRotationWorldToActorLocal(const FRotator& Rotation, const AActor* ToLocalActor, const AActor* FromTarget);
 	
 };

@@ -20,4 +20,8 @@ void AEuclidCharacter::TickActor(float DeltaTime, ELevelTick TickType, FActorTic
 	{
 		m_PortalManager->Update(DeltaTime);
 	}
+	else
+	{
+		UE_LOG(LogTemp,Display,TEXT("Update Portal Manager Failed"));
+	}
 }
