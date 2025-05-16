@@ -101,12 +101,16 @@ void UPortalManager::TeleportRequest(APortal* Portal, AActor* TeleportActor)
 		return;
 	}
 
+	UE_LOG(LogTemp,Display,TEXT("Teleport Requested"));
+
 	Portal->TeleportActor(TeleportActor);
 
 	APortal* FuturePortal = UpdatePortals();
 
 	if(FuturePortal)
 	{
+		UE_LOG(LogTemp,Display,TEXT("Future Portal"));
+
 		FuturePortal->ForceTick();
 		UpdateCapture(FuturePortal);
 	}
@@ -203,7 +207,7 @@ void UPortalManager::UpdateCapture(APortal* Portal)
 	SceneCapture->SetWorldRotation(NewQuat);
 
 	SceneCapture->ClipPlaneNormal = Target->GetActorForwardVector();
-	SceneCapture->ClipPlaneBase = Target->GetActorLocation() + (SceneCapture->ClipPlaneNormal * -1.5f);
+	SceneCapture->ClipPlaneBase = Target->GetActorLocation() + (SceneCapture->ClipPlaneNormal * 1.5f);
 
 	Portal->SetActive(true);
 	Portal->SetRenderTargetTexture(PortalTexture);
