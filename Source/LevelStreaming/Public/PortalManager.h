@@ -51,7 +51,7 @@ public:
 private:
 	void GeneratePortalTexture();
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USceneCaptureComponent2D> SceneCapture;
 
 	UPROPERTY(Transient)

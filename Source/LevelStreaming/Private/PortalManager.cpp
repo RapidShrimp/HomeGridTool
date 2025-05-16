@@ -51,7 +51,7 @@ void UPortalManager::Init(AEuclidCharacter* PlayerCharacter)
 	SceneCapture->RegisterComponent();
 	SceneCapture->bCaptureEveryFrame = false;
 	SceneCapture->bCaptureOnMovement = false;
-	SceneCapture->LODDistanceFactor = 3;
+	//SceneCapture->LODDistanceFactor = 3;
 	SceneCapture->TextureTarget = nullptr;
 	SceneCapture->bEnableClipPlane = true;
 	SceneCapture->bUseCustomProjectionMatrix = true;
@@ -63,17 +63,15 @@ void UPortalManager::Init(AEuclidCharacter* PlayerCharacter)
 	CaptureSettings.bOverride_MotionBlurAmount = true;
 	CaptureSettings.bOverride_SceneFringeIntensity = true;
 	CaptureSettings.bOverride_FilmGrainIntensity = true;
-	CaptureSettings.bOverride_ScreenSpaceReflectionQuality = true;
 
 	CaptureSettings.AmbientOcclusionQuality = 0.0f;
 	CaptureSettings.MotionBlurAmount = 0.0f;
 	CaptureSettings.SceneFringeIntensity = 0.0f;
 	CaptureSettings.FilmGrainIntensity = 0.0f;
-	CaptureSettings.ScreenSpaceReflectionQuality = 0.0f;
-
-	CaptureSettings.bOverride_ScreenPercentage_DEPRECATED = true;
-	CaptureSettings.ScreenPercentage_DEPRECATED = 100.0f;
-
+	
+	CaptureSettings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::Lumen;
+	CaptureSettings.LumenSurfaceCacheResolution = 1;
+	
 	SceneCapture->PostProcessSettings = CaptureSettings;
 
 	GeneratePortalTexture();
@@ -151,7 +149,6 @@ APortal* UPortalManager::UpdatePortals()
 	{
 		APortal* Portal = *ActorItr;
 		FVector PortalLocation  = Portal->GetActorLocation();
-		FVector PortalNormal = -1 * Portal->GetActorForwardVector();
 
 		// Reset Portal
 		Portal->ClearRenderTargetTexture();
@@ -212,7 +209,6 @@ void UPortalManager::UpdateCapture(APortal* Portal)
 	Portal->SetActive(true);
 	Portal->SetRenderTargetTexture(PortalTexture);
 	SceneCapture->TextureTarget = PortalTexture;
-	
 	SceneCapture->CustomProjectionMatrix = UEuclidFunctionLibrary::GetCameraProjectionMatrix(ControllerOwner);
 
 	SceneCapture->CaptureScene();
@@ -252,7 +248,7 @@ void UPortalManager::GeneratePortalTexture()
 		PortalTexture->SizeX = CurrentSizeX;
 		PortalTexture->SizeY = CurrentSizeY;
 		PortalTexture->ClearColor = FLinearColor::Black;
-		PortalTexture->TargetGamma = 2.2f;
+		PortalTexture->TargetGamma = 2.8f;
 		PortalTexture->bNeedsTwoCopies = false;
 		PortalTexture->AddressX = TA_Clamp;
 		PortalTexture->AddressY = TA_Clamp;
