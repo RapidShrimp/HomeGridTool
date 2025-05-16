@@ -43,10 +43,9 @@ bool APortal::IsVisibleLocation(const FVector Location, const FVector PortalLoc,
 bool APortal::IsCrossingPortal(FVector Location, FVector PortalLoc, FVector PortalNorm)
 {
 	FVector Intersect;
-	bool IsCrossingPortal = false;
 	const FPlane PortalPlane = FPlane(PortalLoc, PortalNorm);
 	const float PortalDot = PortalPlane.PlaneDot(Location);
-	const bool Infront = (PortalDot >= 0);
+	const bool InFront = (PortalDot >= 0);
 	const bool Intersected = FMath::SegmentPlaneIntersection(
 		LastLocation,
 		Location,
@@ -55,14 +54,17 @@ bool APortal::IsCrossingPortal(FVector Location, FVector PortalLoc, FVector Port
 
 
 	//Set the previous frame values
-	LastInFront = Infront;
+	LastInFront = InFront;
 	LastLocation = Location;
 
 	//Prevent entering portal from the rear
-	if(Intersected && !Infront && LastInFront)
-		{ IsCrossingPortal = true;	}
+	if(Intersected && !InFront && LastInFront)
+	{
+		UE_LOG(LogTemp,Error,TEXT("Should Teleport"));
+		return true;
+	}
 
-	return IsCrossingPortal;
+	return false;
 }
 
 void APortal::TeleportActor(AActor* TeleportActor)

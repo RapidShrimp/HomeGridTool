@@ -256,7 +256,6 @@ void UPortalManager::GeneratePortalTexture()
 		PortalTexture->bNeedsTwoCopies = false;
 		PortalTexture->AddressX = TA_Clamp;
 		PortalTexture->AddressY = TA_Clamp;
-
 		PortalTexture->bAutoGenerateMips = false;
 		PortalTexture->UpdateResource();
 	}
