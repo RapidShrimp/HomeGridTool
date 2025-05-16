@@ -59,6 +59,10 @@ void UPortalManager::Init(AEuclidCharacter* PlayerCharacter)
 
 	
 	FPostProcessSettings CaptureSettings;
+	//Enable Lumen
+
+	//Capture Cache Scale
+	
 	CaptureSettings.bOverride_AmbientOcclusionQuality = true;
 	CaptureSettings.bOverride_MotionBlurAmount = true;
 	CaptureSettings.bOverride_SceneFringeIntensity = true;
@@ -68,7 +72,6 @@ void UPortalManager::Init(AEuclidCharacter* PlayerCharacter)
 	CaptureSettings.MotionBlurAmount = 0.0f;
 	CaptureSettings.SceneFringeIntensity = 0.0f;
 	CaptureSettings.FilmGrainIntensity = 0.0f;
-	
 	CaptureSettings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::Lumen;
 	CaptureSettings.LumenSurfaceCacheResolution = 1;
 	
