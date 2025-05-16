@@ -6,7 +6,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "LevelStreaming/Public/EuclidFunctionLibrary.h"
-
+DEFINE_LOG_CATEGORY(PortalLog);
 
 // Sets default values
 APortal::APortal()
@@ -53,17 +53,21 @@ bool APortal::IsCrossingPortal(FVector Location, FVector PortalLoc, FVector Port
 		Intersect );
 
 
-	//Set the previous frame values
-	LastInFront = InFront;
-	LastLocation = Location;
+	UE_LOG(PortalLog,Error,TEXT("Should TP %d"),Intersected && !InFront && LastInFront);
+
+
 
 	//Prevent entering portal from the rear
 	if(Intersected && !InFront && LastInFront)
 	{
-		UE_LOG(LogTemp,Error,TEXT("Should Teleport"));
+		UE_LOG(PortalLog,Error,TEXT("Should Teleport"));
 		return true;
 	}
 
+	//Set the previous frame values
+	LastInFront = InFront;
+	LastLocation = Location;
+	
 	return false;
 }
 
@@ -73,7 +77,7 @@ void APortal::TeleportActor(AActor* TeleportActor)
 	//Exit Early Null Checks
 	if(!TeleportActor || !Target)
 	{
-		UE_LOG(LogTemp,Error,TEXT("No Target or Teleport Actor"));
+		UE_LOG(PortalLog,Error,TEXT("No Target or Teleport Actor"));
 		return;
 	}
 
@@ -81,13 +85,13 @@ void APortal::TeleportActor(AActor* TeleportActor)
 	FHitResult Hit;
 	const FVector NewLocation = UEuclidFunctionLibrary::ConvertLocationWorldToActorLocal(TeleportActor->GetActorLocation(),this,Target);
 	TeleportActor->SetActorLocation(NewLocation,false,&Hit,ETeleportType::TeleportPhysics);
-	
 
 	//Rotation Change
 	FRotator ExitRotation = UEuclidFunctionLibrary::ConvertRotationWorldToActorLocal(TeleportActor->GetActorRotation(),this,Target);
 	TeleportActor->SetActorRotation(ExitRotation);
 	
 
+	TeleportActor->TeleportTo(NewLocation,ExitRotation,false,false);
 	//Preserve Velocity
 	FVector CurrentVelocity = TeleportActor->GetVelocity();
 	FVector Dots;
@@ -102,7 +106,7 @@ void APortal::TeleportActor(AActor* TeleportActor)
 	
 	TeleportActor->GetRootComponent()->ComponentVelocity = ExitVelocity;
 	
-	UE_LOG(LogTemp,Display,TEXT("Try Teleport Actor"));
+	UE_LOG(PortalLog,Display,TEXT("Try Teleport Actor"));
 
 	//Exit Rotation
 	if( TeleportActor->IsA(ACharacter::StaticClass()))

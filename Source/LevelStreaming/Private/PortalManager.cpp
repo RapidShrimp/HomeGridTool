@@ -35,12 +35,12 @@ void UPortalManager::Init(AEuclidCharacter* PlayerCharacter)
 
 	if(!GetOwner())
 	{
-		UE_LOG(LogTemp,Error,TEXT("Portal Manager Has No Owner"))
+		UE_LOG(PortalLog,Error,TEXT("Portal Manager Has No Owner"))
 		return;
 	}
 	if(!GetOwner()->IsA(AController::StaticClass()))
 	{
-		UE_LOG(LogTemp,Error,TEXT("Cannot Attach Portal Manager To a Non Controller classtype"))
+		UE_LOG(PortalLog,Error,TEXT("Cannot Attach Portal Manager To a Non Controller classtype"))
 		return;
 	}
 	SetControllerOwner(Cast<APlayerController>(GetOwner()));
@@ -78,7 +78,7 @@ void UPortalManager::Init(AEuclidCharacter* PlayerCharacter)
 
 	GeneratePortalTexture();
 
-	UE_LOG(LogTemp,Display,TEXT("Successfully Init Portal Manager"));
+	UE_LOG(PortalLog,Display,TEXT("Successfully Init Portal Manager"));
 
 }
 
@@ -97,7 +97,7 @@ void UPortalManager::TeleportRequest(APortal* Portal, AActor* TeleportActor)
 {
 	if(!Portal || !TeleportActor)
 	{
-		UE_LOG(LogTemp,Error,TEXT("Teleport Request Failed Portal OR Teleport Actor Nullptr"));
+		UE_LOG(PortalLog,Error,TEXT("Teleport Request Failed Portal OR Teleport Actor Nullptr"));
 		return;
 	}
 
@@ -109,7 +109,7 @@ void UPortalManager::TeleportRequest(APortal* Portal, AActor* TeleportActor)
 
 	if(FuturePortal)
 	{
-		UE_LOG(LogTemp,Display,TEXT("Future Portal"));
+		UE_LOG(PortalLog,Display,TEXT("Future Portal"));
 
 		FuturePortal->ForceTick();
 		UpdateCapture(FuturePortal);
@@ -138,7 +138,7 @@ APortal* UPortalManager::UpdatePortals()
 {
 	if(ControllerOwner == nullptr)
 	{
-		UE_LOG(LogTemp,Error,TEXT("Cannot update portal, controller nullptr"));
+		UE_LOG(PortalLog,Error,TEXT("Cannot update portal, controller nullptr"));
 		return nullptr;
 	}
 
@@ -174,13 +174,13 @@ void UPortalManager::UpdateCapture(APortal* Portal)
 
 	if(ControllerOwner == nullptr)
 	{
-		UE_LOG(LogTemp,Error,TEXT("Cannot Update Capture, No Controller"));
+		UE_LOG(PortalLog,Error,TEXT("Cannot Update Capture, No Controller"));
 		return;
 	}
 
 	if(!SceneCapture || !PortalTexture || !Portal)
 	{
-		UE_LOG(LogTemp,Error,TEXT("Cannot Update Capture nullptr found"));
+		UE_LOG(PortalLog,Error,TEXT("Cannot Update Capture nullptr found"));
 		return;
 	}
 
@@ -189,7 +189,7 @@ void UPortalManager::UpdateCapture(APortal* Portal)
 
 	if(Target == nullptr)
 	{
-		UE_LOG(LogTemp,Error,TEXT("Target is nullptr"));
+		UE_LOG(PortalLog,Error,TEXT("Target is nullptr"));
 		return;
 	}
 
@@ -217,7 +217,7 @@ void UPortalManager::UpdateCapture(APortal* Portal)
 
 	SceneCapture->CaptureScene();
 
-	UE_LOG(LogTemp,Display,TEXT("Capture Updated"));
+	//UE_LOG(PortalLog,Display,TEXT("Capture Updated"));
 }
 
 void UPortalManager::GeneratePortalTexture()
@@ -239,7 +239,7 @@ void UPortalManager::GeneratePortalTexture()
 		return;
 	}
 
-	UE_LOG(LogTemp,Warning,TEXT("Size Changed"));
+	UE_LOG(PortalLog,Warning,TEXT("Size Changed"));
 	if(PortalTexture == nullptr)
 	{
 		PortalTexture = NewObject<UTextureRenderTarget2D>(this,UTextureRenderTarget2D::StaticClass(),TEXT("Portal Render Target"));

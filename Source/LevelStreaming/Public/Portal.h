@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Portal.generated.h"
+DECLARE_LOG_CATEGORY_EXTERN(PortalLog, Log, All);
 
 UCLASS()
 class LEVELSTREAMING_API APortal : public AActor
@@ -74,5 +75,7 @@ public:
 
 	UFUNCTION(BlueprintCallable,Category = "Portal")
 	void TeleportActor(AActor* TeleportActor);
-	
+
+
+
 };
