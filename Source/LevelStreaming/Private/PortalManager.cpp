@@ -59,9 +59,8 @@ void UPortalManager::Init(AEuclidCharacter* PlayerCharacter)
 
 	
 	FPostProcessSettings CaptureSettings;
-	//Enable Lumen
-
-	//Capture Cache Scale
+	//TODO - Enable Lumen
+	//TODO - Capture Cache Scale
 	
 	CaptureSettings.bOverride_AmbientOcclusionQuality = true;
 	CaptureSettings.bOverride_MotionBlurAmount = true;
