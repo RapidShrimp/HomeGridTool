@@ -7,6 +7,7 @@
 #include "IContentBrowserSingleton.h"
 #include "Modules/ModuleManager.h"
 #include "AssetToolsModule.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "Misc/PackageName.h"
 #include "UObject/Package.h"
 #include "UObject/UObjectGlobals.h"
@@ -38,39 +39,69 @@ UObject* UHomeGridFunctionLibraray::ShowEditorAssetSaveDialog(const FString& Def
         return nullptr; // User cancelled
     }
 
-    // Extract package path and asset name
-    FString AssetName;
-    FString PackagePath;
-
-    if (!ObjectPath.Split(TEXT("/"), &PackagePath, &AssetName, ESearchCase::IgnoreCase, ESearchDir::FromEnd))
+    // Remove trailing slash
+    FString CleanObjectPath = ObjectPath;
+    if (CleanObjectPath.EndsWith("/"))
     {
-        UE_LOG(LogTemp, Warning, TEXT("Failed to split object path: %s"), *ObjectPath);
-        return nullptr;
+        CleanObjectPath = CleanObjectPath.LeftChop(1);
     }
 
-    PackagePath = ObjectPath.Left(ObjectPath.Len() - (AssetName.Len() + 1)); // Remove '/AssetName'
+    // Extract package name and asset name
+    FString PackageName;
+    FString AssetName;
+
+    if (!CleanObjectPath.Split(TEXT("."), &PackageName, &AssetName))
+    {
+        int32 LastSlashIndex;
+        if (!CleanObjectPath.FindLastChar('/', LastSlashIndex))
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Invalid ObjectPath format: %s"), *CleanObjectPath);
+            return nullptr;
+        }
+        PackageName = CleanObjectPath.Left(LastSlashIndex);
+        AssetName = CleanObjectPath.Mid(LastSlashIndex + 1);
+    }
 
     // Create package
-    UPackage* Package = CreatePackage(*PackagePath);
+    UPackage* Package = CreatePackage(*PackageName);
     if (!Package)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Failed to create package: %s"), *PackagePath);
+        UE_LOG(LogTemp, Warning, TEXT("Failed to create package: %s"), *PackageName);
         return nullptr;
     }
 
     // Create asset
-    UObject* NewAsset = NewObject<UObject>(Package, AssetClass, *AssetName, RF_Public | RF_Standalone);
+    UObject* NewAsset = NewObject<UObject>(Package, AssetClass.Get(), *AssetName, RF_Public | RF_Standalone);
     if (!NewAsset)
     {
         UE_LOG(LogTemp, Warning, TEXT("Failed to create asset: %s"), *AssetName);
         return nullptr;
     }
 
+    // Notify Asset Registry about the new asset
+    FAssetRegistryModule::AssetCreated(NewAsset);
+
+    // Load to avoid partial load issues
+    Package->FullyLoad();
+    NewAsset->ConditionalPostLoad();
+
+    // Mark package dirty so editor and Git knows it changed
     Package->MarkPackageDirty();
 
-    // Save package to disk
-    FString FilePath = FPackageName::LongPackageNameToFilename(PackagePath, FPackageName::GetAssetPackageExtension());
-    bool bSuccess = UPackage::SavePackage(Package, NewAsset, EObjectFlags::RF_Public | RF_Standalone, *FilePath);
+    //Force Save package
+    FString FilePath = FPackageName::LongPackageNameToFilename(PackageName, FPackageName::GetAssetPackageExtension());
+
+    bool bSuccess = UPackage::SavePackage(
+        Package,
+        NewAsset,
+        EObjectFlags::RF_Public | RF_Standalone,
+        *FilePath,
+        GError,
+        nullptr,
+        true,  // bForceByteSwapping
+        true,  // bWarnOfLongFilename
+        SAVE_NoError
+    );
 
     if (!bSuccess)
     {
@@ -85,23 +116,14 @@ UObject* UHomeGridFunctionLibraray::ShowEditorAssetSaveDialog(const FString& Def
 #endif
 }
 
-FLevelObjectRef UHomeGridFunctionLibraray::MakeSoftLevelReference(UObject* LevelAssetObject)
+
+FSoftWorldReference UHomeGridFunctionLibraray::MakeSoftLevelReference(UObject* LevelAssetObject)
 {
-    FLevelObjectRef LevelRef;
-
-    if (LevelAsset && LevelAsset->IsA<UWorld>())
+    if (LevelAssetObject && LevelAssetObject->IsA<UWorld>())
     {
-        // Get the level package name (full path)
-        FString PackageName = LevelAsset->GetOutermost()->GetName();
-
-        // Assign package name to FLevelObjectRef
-        LevelRef.LevelName = FName(*PackageName);
-    }
-    else
-    {
-        LevelRef.LevelName = NAME_None;
+        return FSoftWorldReference(Cast<UWorld>(LevelAssetObject));
     }
 
-    return LevelRef;
+    UE_LOG(LogTemp, Warning, TEXT("Provided asset is not a UWorld."));
+    return FSoftWorldReference();
 }
-

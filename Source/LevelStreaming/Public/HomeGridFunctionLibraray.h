@@ -3,7 +3,7 @@
 #pragma once
 
 
-
+#include "Engine/SoftWorldReference.h"
 #include "LevelInstance/LevelInstanceTypes.h" // for FLevelNameObjectReference
 #include "HomeGridFunctionLibraray.generated.h"
 
@@ -27,8 +27,6 @@ public:
 	static UObject* ShowEditorAssetSaveDialog(const FString& DefaultPath = "/Game", const FString& DefaultAssetName = "NewAsset", TSubclassOf<UObject> AssetClass = nullptr);
 
 	UFUNCTION(BlueprintCallable)
-	LevelNameObjectReference UHomeGridFunctionLibraray::MakeSoftLevelReference(UObject* LevelAssetObject)
-
-
+	static FSoftWorldReference MakeSoftLevelReference(UObject* LevelAssetObject);
 	
 };
