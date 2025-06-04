@@ -14,14 +14,13 @@ public class LevelStreaming : ModuleRules
 			"ContentBrowser",
 			"AssetTools",
 			"Slate",
-			"SlateCore"
+			"SlateCore",
+			"UnrealEd",
+			"LevelInstanceEditor"
 			
 		});
 
 
-		// Uncomment if you are using Slate UI
-		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
-		
 		// Uncomment if you are using online features
 		// PrivateDependencyModuleNames.Add("OnlineSubsystem");
 
